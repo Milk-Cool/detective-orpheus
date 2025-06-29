@@ -1,7 +1,7 @@
 import "dotenv/config";
 import { WebClient } from "@slack/web-api";
 import { SocketModeClient } from "@slack/socket-mode";
-import { db, deleteSubscription, FEED_ID, getAllSubscribers, getSubscriptions, parseMsg, pushSubscription } from "./index.js";
+import { db, deleteSubscription, FEED_ID, getAllSubscribers, getSubscriptions, getTimestamp, parseMsg, pushSubscription, setTimestamp } from "./index.js";
 
 const socket = new SocketModeClient({ appToken: process.env.SLACK_APP_TOKEN });
 const client = new WebClient(process.env.SLACK_BOT_TOKEN);
@@ -35,10 +35,35 @@ socket.on("slash_commands", async ({ body, ack, say }) => {
 });
 (async () => await socket.start())();
 
-const result = await client.conversations.history({
-    channel: FEED_ID
-});
-console.log(result.messages.map(x => parseMsg(x?.blocks?.[0]?.text?.text, x?.root?.blocks?.[0]?.text?.text)));
+setInterval(async () => {
+    console.log("Pulling new messages...");
+    const result = await client.conversations.history({
+        channel: FEED_ID
+    });
+    const curTimestamp = getTimestamp();
+    const newTimestamp = parseFloat(result.messages.find(x => x && x.ts).ts);
+    const updates = result.messages
+        .filter(x => x && (!curTimestamp || parseFloat(x.ts) > curTimestamp))
+        .map(x => parseMsg(x?.blocks?.[0]?.text?.text, x?.root?.blocks?.[0]?.text?.text, x))
+        .filter(x => x);
+    for(const update of updates) {
+        console.log(`Project "${update[2]}" by ${update[1]} - ${update[0]}`);
+        let text;
+        if(update[0] === "project")
+            text = "New project!";
+        else
+            text = "New devlog!";
+        for(const subscriber of getAllSubscribers(update[1]))
+            try {
+                await client.chat.postMessage({
+                    channel: subscriber.dm_channel_id,
+                    text: `${text}\nProject "${update[2]}"\nBy <@${update[1]}>\n\n${update[3]}\n\n${(update[0] === "project" ? update[4]?.blocks : update[4]?.root?.blocks)?.[1]?.elements?.[0]?.url || ""}`
+                });
+                console.log(`Sent message to ${subscriber.subscriber}`);
+            } catch(e) { console.error(e); }
+    }
+    setTimestamp(newTimestamp);
+}, 30 * 1000); // 30s
 
 const stop = () => {
     db.close();

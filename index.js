@@ -7,6 +7,7 @@ db.pragma("journal_mode = WAL");
  * @typedef {object} Subscription
  * @prop {number} id
  * @prop {string} subscriber
+ * @prop {string} dm_channel_id
  * @prop {string} who
  */
 db.prepare(`CREATE TABLE IF NOT EXISTS subscriptions (
@@ -17,7 +18,17 @@ db.prepare(`CREATE TABLE IF NOT EXISTS subscriptions (
 )`).run();
 db.prepare(`CREATE TABLE IF NOT EXISTS timestamp (
     timestamp REAL
-)`);
+)`).run();
+
+/** @returns {number | undefined} */
+export function getTimestamp() {
+    return db.prepare(`SELECT * FROM timestamp`).get()?.timestamp;
+}
+export function setTimestamp(timestamp) {
+    if(getTimestamp() === undefined)
+        db.prepare(`INSERT INTO timestamp (timestamp) VALUES (?)`).run(timestamp);
+    else db.prepare(`UPDATE timestamp SET timestamp = ?`).run(timestamp);
+}
 
 export const FEED_ID = "C091CEEHJ9K"; // #summer-of-making-feed
 
@@ -91,36 +102,37 @@ export function deleteSubscription(subscriber, who) {
     return true;
 }
 
-/** @typedef {["project" | "update", string, string, string] | null} ParsedMessage */
+/** @typedef {["project" | "update", string, string, string, any] | null} ParsedMessage */
 
 const ID_REGEX = /(?<=\s*by\s*<@)[^>]+(?=>)/;
 /**
  * @param {string} text 
  * @returns {ParsedMessage}
  */
-const parseRoot = text => {
+const parseRoot = (text, ctx) => {
     const [_firstLine, rest] = splitFirstNewline(text);
     let [name, description] = splitFirstNewline(rest);
     const id = description.match(ID_REGEX)?.[0];
     if(!id) return null;
     description = description.replace(/\s*by\s*<@[^>]+>$/, "");
-    return ["project", id, name, description];
+    return ["project", id, name, description, ctx];
 }
 
 /**
  * Parses a message and returns its type, author and contents.
  * @param {string} text The raw message
  * @param {string} [root] The root message
- * @returns {ParsedMessage} [type, author ID, name, contents] or null if unparseable
+ * @param {any} [ctx] Context
+ * @returns {ParsedMessage} [type, author ID, name, contents, ctx] or null if unparseable
  */
-export const parseMsg = (text, root) => {
+export const parseMsg = (text, root, ctx) => {
     if(!text) return null;
     if(!root) {
-        return parseRoot(text);
+        return parseRoot(text, ctx);
     } else {
         const parsedRoot = parseRoot(root);
         if(parsedRoot === null) return null;
         const [_firstLine, description] = splitFirstNewline(text);
-        return ["update", parsedRoot[1], parsedRoot[2], description];
+        return ["update", parsedRoot[1], parsedRoot[2], description, ctx];
     }
 };
