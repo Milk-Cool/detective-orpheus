@@ -1,0 +1,28 @@
+{
+  "name": "detective-orpheus",
+  "version": "0.1.0",
+  "description": "See what your friends are doing for Summer of Making!",
+  "keywords": [
+    "orpheus",
+    "som"
+  ],
+  "homepage": "https://github.com/Milk-Cool/detective-orpheus#readme",
+  "bugs": {
+    "url": "https://github.com/Milk-Cool/detective-orpheus/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Milk-Cool/detective-orpheus.git"
+  },
+  "license": "MIT",
+  "author": "Milk_Cool",
+  "type": "module",
+  "main": "index.js",
+  "scripts": {
+    "start": "node bot.js"
+  },
+  "dependencies": {
+    "@slack/web-api": "^7.9.3",
+    "dotenv": "^17.0.0"
+  }
+}
