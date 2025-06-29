@@ -142,4 +142,4 @@ vite.config.ts.timestamp-*
 package-lock.json
 
 # Database
-data.db
+data.db*
