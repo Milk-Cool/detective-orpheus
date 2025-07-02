@@ -35,6 +35,8 @@ socket.on("slash_commands", async ({ body, ack, say }) => {
 });
 (async () => await socket.start())();
 
+const sleep = ms => new Promise(resolve => setTimeout(resolve, ms));
+
 setInterval(async () => {
     console.log("Pulling new messages...");
     const result = await client.conversations.history({
@@ -59,11 +61,12 @@ setInterval(async () => {
                     channel: subscriber.dm_channel_id,
                     text: `${text}\nProject "${update[2]}"\nBy <@${update[1]}>\n\n${update[3]}\n\n${(update[0] === "project" ? update[4]?.blocks : update[4]?.root?.blocks)?.[1]?.elements?.[0]?.url || ""}`
                 });
+                await sleep(300);
                 console.log(`Sent message to ${subscriber.subscriber}`);
             } catch(e) { console.error(e); }
     }
     setTimestamp(newTimestamp);
-}, 30 * 1000); // 30s
+}, 60 * 1000); // 60s
 
 const stop = () => {
     db.close();
