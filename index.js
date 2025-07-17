@@ -44,13 +44,13 @@ export const splitFirstNewline = text => {
 
 /**
  * Gets a subscription.
- * @param {string} subscriber Subscriber ID 
+ * @param {string} channelID Channel ID 
  * @param {string} who Who the subscriber is subscribing to (ID)
  * @returns {Subscription} The subscription
  */
-export function getSubscription(subscriber, who) {
-    return db.prepare(`SELECT * FROM subscriptions WHERE subscriber = ? AND who = ?`)
-        .get(subscriber, who);
+export function getSubscription(channelID, who) {
+    return db.prepare(`SELECT * FROM subscriptions WHERE dm_channel_id = ? AND who = ?`)
+        .get(channelID, who);
 }
 
 /**
@@ -90,15 +90,15 @@ export function pushSubscription(subscriber, who, dmChannelID) {
 
 /**
  * Deletes a subscription.
- * @param {string} subscriber Subscriber ID 
+ * @param {string} channelID Subscriber ID 
  * @param {string} who Who the subscriber is subscribing to (ID)
  * @returns {boolean} `false` if it didn't exist
  */
-export function deleteSubscription(subscriber, who) {
-    if(!getSubscription(subscriber, who))
+export function deleteSubscription(channelID, who) {
+    if(!getSubscription(channelID, who))
         return false;
-    db.prepare(`DELETE FROM subscriptions WHERE subscriber = ? AND who = ?`)
-        .run(subscriber, who);
+    db.prepare(`DELETE FROM subscriptions WHERE dm_channel_id = ? AND who = ?`)
+        .run(channelID, who);
     return true;
 }
 

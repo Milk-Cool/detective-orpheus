@@ -27,14 +27,14 @@ socket.on("slash_commands", async ({ body, ack, say }) => {
     } else if(body.command === `/${prefix}unsubscribe`) {
         const who = body.text.match(MENTION_REGEX)?.[0];
         if(!who) return await ack({ text: errors.invalidMention });
-        if(!deleteSubscription(body.user_id, who)) return await ack({ text: errors.notSubscribed });
+        if(!deleteSubscription(body.channel_id, who)) return await ack({ text: errors.notSubscribed });
         await ack({ text: "Unsubscribed!" });
     } else if(body.command === `/${prefix}subscriptions`) {
         const subscriptions = getSubscriptions(body.user_id);
-        await ack({ text: "Your subscriptions:\n" + (subscriptions.map(x => `<@${x.who}>`).join("\n") || "None yet!") });
+        await ack({ text: "Your subscriptions:\n" + (subscriptions.map(x => `<@${x.who}> in <#${x.dm_channel_id}>`).join("\n") || "None yet!") });
     } else if(body.command === `/${prefix}subscribers`) {
         const subscriptions = getAllSubscribers(body.user_id);
-        await ack({ text: "Your subscribers:\n" + (subscriptions.map(x => `<@${x.subscriber}>`).join("\n") || "None yet!") });
+        await ack({ text: "Your subscribers:\n" + (subscriptions.map(x => `<@${x.subscriber}> in <#${x.dm_channel_id}>`).join("\n") || "None yet!") });
     }
 });
 (async () => await socket.start())();
