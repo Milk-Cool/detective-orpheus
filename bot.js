@@ -17,6 +17,8 @@ const errors = {
 const prefix = process.env.DEV ? "ddev" : "d";
 
 socket.on("slash_commands", async ({ body, ack, say }) => {
+    if(body.channel_name !== "directmessage" && (await client.conversations.info({ channel: body.channel_id }))?.channel?.creator !== body.user_id)
+        return await ack({ text: "You're not the channel's creator!" });
     if(body.command === `/${prefix}subscribe`) {
         const who = body.text.match(MENTION_REGEX)?.[0];
         if(!who) return await ack({ text: errors.invalidMention });
