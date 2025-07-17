@@ -1,7 +1,7 @@
 import "dotenv/config";
 import { WebClient } from "@slack/web-api";
 import { SocketModeClient } from "@slack/socket-mode";
-import { db, deleteSubscription, FEED_ID, getAllSubscribers, getSubscriptions, getTimestamp, parseMsg, pushSubscription, setTimestamp, subscribersLeaderboard } from "./index.js";
+import { db, deleteSubscription, FEED_ID, getAllSubscribers, getNotificationPreferences, getSubscriptions, getTimestamp, parseMsg, pushSubscription, setTimestamp, subscribersLeaderboard, toggleNotificationPreferences } from "./index.js";
 
 const socket = new SocketModeClient({ appToken: process.env.SLACK_APP_TOKEN });
 const client = new WebClient(process.env.SLACK_BOT_TOKEN);
@@ -17,6 +17,12 @@ const errors = {
 const prefix = process.env.DEV ? "ddev" : "d";
 
 socket.on("slash_commands", async ({ body, ack, say }) => {
+    if(body.command === `/${prefix}ping`) {
+        const newPrefs = toggleNotificationPreferences(body.user_id);
+        await ack({ text: newPrefs ? "You will now get pinged on new notifications." : "You will no longer get pinged on new notifications." });
+        return;
+    }
+
     if(body.channel_name !== "directmessage" && (await client.conversations.info({ channel: body.channel_id }))?.channel?.creator !== body.user_id)
         return await ack({ text: "You're not the channel's creator!" });
     if(body.command === `/${prefix}subscribe`) {
@@ -62,11 +68,13 @@ setInterval(async () => {
             text = "New project!";
         else
             text = "New devlog!";
-        for(const subscriber of getAllSubscribers(update[1]))
+        // DO NOT COMMIT!!!
+        for(const subscriber of getAllSubscribers(update[1]).concat({dm_channel_id:"D097026NZAL",subscriber:"U089903JZDH",who:update[1]}))
             try {
+                const ping = getNotificationPreferences(subscriber.subscriber);
                 await client.chat.postMessage({
                     channel: subscriber.dm_channel_id,
-                    text: `${text}\nProject "${update[2]}"\nBy <@${update[1]}>\n\n${update[3]}\n\n${(update[0] === "project" ? update[4]?.blocks : update[4]?.root?.blocks)?.[1]?.elements?.[0]?.url || ""}`
+                    text: `${text}${ping ? ` (<@${subscriber.subscriber}>)` : ""}\nProject "${update[2]}"\nBy <@${update[1]}>\n\n${update[3]}\n\n${(update[0] === "project" ? update[4]?.blocks : update[4]?.root?.blocks)?.[1]?.elements?.[0]?.url || ""}`
                 });
                 await sleep(300);
                 console.log(`Sent message to ${subscriber.subscriber}`);

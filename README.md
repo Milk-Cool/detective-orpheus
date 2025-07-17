@@ -7,7 +7,7 @@ See what your friends are doing for Summer of Making!
 1. Create a Slack app.
 2. Install the app and enable socket mode. Also, don't forget to set up slash commands.
 ![](images/2025-06-29-11-42-49.png)
-![](images/2025-07-17-22-18-27.png)
+![](images/2025-07-17-23-01-34.png)
 
 (also add `groups:read` for private channels support)
 

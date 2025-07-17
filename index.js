@@ -16,6 +16,11 @@ db.prepare(`CREATE TABLE IF NOT EXISTS subscriptions (
     dm_channel_id TEXT NOT NULL,
     who TEXT NOT NULL
 )`).run();
+db.prepare(`CREATE TABLE IF NOT EXISTS notification_preferences (
+    id INTEGER PRIMARY KEY,
+    subscriber TEXT NOT NULL,
+    ping INTEGER
+)`).run();
 db.prepare(`CREATE TABLE IF NOT EXISTS timestamp (
     timestamp REAL
 )`).run();
@@ -129,6 +134,31 @@ const parseRoot = (text, ctx) => {
     description = description.replace(/\s*by\s*<@[^>]+>$/, "");
     return ["project", id, name, description, ctx];
 }
+
+/**
+ * Gets notification preferences for a user.
+ * @param {string} user User ID
+ * @returns {0 | 1} 0 if pings are off, 1 if they're on
+ */
+export function getNotificationPreferences(user) {
+    return db.prepare(`SELECT * FROM notification_preferences WHERE subscriber = ?`).get(user)?.ping ?? 1;
+};
+/**
+ * Toggles notification preferences for a user.
+ * @param {string} user User ID
+ * @returns {0 | 1} 0 if pings are off, 1 if they're on
+ */
+export function toggleNotificationPreferences(user) {
+    const pastPreference = db.prepare(`SELECT * FROM notification_preferences WHERE subscriber = ?`).get(user);
+    if(!pastPreference) {
+        db.prepare(`INSERT INTO notification_preferences (subscriber, ping)
+            VALUES (?, 0)`).run(user);
+        return 0;
+    }
+    const newPreference = 1 - pastPreference.ping;
+    db.prepare(`UPDATE notification_preferences SET ping = ? WHERE subscriber = ?`).run(newPreference, user);
+    return newPreference;
+};
 
 /**
  * Parses a message and returns its type, author and contents.
