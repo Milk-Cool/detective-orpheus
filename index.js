@@ -81,7 +81,7 @@ export function getSubscriptions(subscriber) {
  * @returns {boolean} `false` if it already exists
  */
 export function pushSubscription(subscriber, who, dmChannelID) {
-    if(getSubscription(subscriber, who))
+    if(getSubscription(dmChannelID, who))
         return false;
     db.prepare(`INSERT INTO subscriptions (subscriber, who, dm_channel_id) VALUES (?, ?, ?)`)
         .run(subscriber, who, dmChannelID);
