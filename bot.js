@@ -14,21 +14,23 @@ const errors = {
     notSubscribed: "Not subscribed!"
 };
 
+const prefix = process.env.DEV ? "ddev" : "d";
+
 socket.on("slash_commands", async ({ body, ack, say }) => {
-    if(body.command === "/dsubscribe") {
+    if(body.command === `/${prefix}subscribe`) {
         const who = body.text.match(MENTION_REGEX)?.[0];
         if(!who) return await ack({ text: errors.invalidMention });
         if(!pushSubscription(body.user_id, who, body.channel_id)) return await ack({ text: errors.alreadySubscribed });
         await ack({ text: "Subscribed!" });
-    } else if(body.command === "/dunsubscribe") {
+    } else if(body.command === `/${prefix}unsubscribe`) {
         const who = body.text.match(MENTION_REGEX)?.[0];
         if(!who) return await ack({ text: errors.invalidMention });
         if(!deleteSubscription(body.user_id, who)) return await ack({ text: errors.notSubscribed });
         await ack({ text: "Unsubscribed!" });
-    } else if(body.command === "/dsubscriptions") {
+    } else if(body.command === `/${prefix}subscriptions`) {
         const subscriptions = getSubscriptions(body.user_id);
         await ack({ text: "Your subscriptions:\n" + (subscriptions.map(x => `<@${x.who}>`).join("\n") || "None yet!") });
-    } else if(body.command === "/dsubscribers") {
+    } else if(body.command === `/${prefix}subscribers`) {
         const subscriptions = getAllSubscribers(body.user_id);
         await ack({ text: "Your subscribers:\n" + (subscriptions.map(x => `<@${x.subscriber}>`).join("\n") || "None yet!") });
     }
