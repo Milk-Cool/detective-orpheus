@@ -68,8 +68,7 @@ setInterval(async () => {
             text = "New project!";
         else
             text = "New devlog!";
-        // DO NOT COMMIT!!!
-        for(const subscriber of getAllSubscribers(update[1]).concat({dm_channel_id:"D097026NZAL",subscriber:"U089903JZDH",who:update[1]}))
+        for(const subscriber of getAllSubscribers(update[1]))
             try {
                 const ping = getNotificationPreferences(subscriber.subscriber);
                 await client.chat.postMessage({
