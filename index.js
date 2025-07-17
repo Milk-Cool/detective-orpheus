@@ -102,6 +102,18 @@ export function deleteSubscription(channelID, who) {
     return true;
 }
 
+/**
+ * Gets the subscribers leaderboard, only the top 20 positions.
+ * @returns {{ who: string, num: number }[]} The subscriptions
+ */
+export function subscribersLeaderboard() {
+    return db.prepare(`SELECT COUNT(*) AS num, who
+        FROM subscriptions
+        GROUP BY who
+        ORDER BY num DESC
+        LIMIT 20`).all();
+}
+
 /** @typedef {["project" | "update", string, string, string, any] | null} ParsedMessage */
 
 const ID_REGEX = /(?<=\s*by\s*<@)[^>]+(?=>)/;

@@ -1,7 +1,7 @@
 import "dotenv/config";
 import { WebClient } from "@slack/web-api";
 import { SocketModeClient } from "@slack/socket-mode";
-import { db, deleteSubscription, FEED_ID, getAllSubscribers, getSubscriptions, getTimestamp, parseMsg, pushSubscription, setTimestamp } from "./index.js";
+import { db, deleteSubscription, FEED_ID, getAllSubscribers, getSubscriptions, getTimestamp, parseMsg, pushSubscription, setTimestamp, subscribersLeaderboard } from "./index.js";
 
 const socket = new SocketModeClient({ appToken: process.env.SLACK_APP_TOKEN });
 const client = new WebClient(process.env.SLACK_BOT_TOKEN);
@@ -35,6 +35,9 @@ socket.on("slash_commands", async ({ body, ack, say }) => {
     } else if(body.command === `/${prefix}subscribers`) {
         const subscriptions = getAllSubscribers(body.user_id);
         await ack({ text: "Your subscribers:\n" + (subscriptions.map(x => `<@${x.subscriber}> in <#${x.dm_channel_id}>`).join("\n") || "None yet!") });
+    } else if(body.command === `/${prefix}leaderboard`) {
+        const leaderboard = subscribersLeaderboard();
+        await ack({ text: "Leaderboard:\n" + (leaderboard.map((x, i) => `${i + 1}: <@${x.who}> - ${x.num} subscribers`).join("\n") || "None yet!") });
     }
 });
 (async () => await socket.start())();
